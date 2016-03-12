@@ -14,25 +14,26 @@ class PresentationFrame(tk.Frame):
         self.can = None
         self.can_img = None
         self.image = None
-        self.resized_photo = None
+        self.photo = None
 
         self.init_ui()
 
-    def change_image(self, image):
-        self.image = image
+    def change_image(self, slide):
+        if slide.resized_image is None:
+            print "Resized image is None but shouldn't"
+        self.image = slide.resized_image
         self.event_generate("<<paint_canvas>>")
 
     def fade_out(self):
         self.image = None
-        self.resized_photo = None
+        self.photo = None
         self.event_generate("<<paint_canvas>>")
 
     def _paint_canvas(self, event=None):
         if not self.image is None:
-            self.resized_photo = self.image.resize(self.screen_position[0:2], PIL.Image.ANTIALIAS)
-            self.resized_photo = PIL.ImageTk.PhotoImage(self.resized_photo)
+            self.photo = PIL.ImageTk.PhotoImage(self.image)
             self.can.delete(tk.ALL)
-            self.can_img = self.can.create_image(0, 0, image=self.resized_photo, anchor=tk.NW)
+            self.can_img = self.can.create_image(0, 0, image=self.photo, anchor=tk.NW)
         else:
             self.can.delete(tk.ALL)
 

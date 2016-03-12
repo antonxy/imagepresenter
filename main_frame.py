@@ -153,6 +153,7 @@ class MainFrame(tk.Frame):
             self.presentation_window_position = tuple([int(config.get('Presentation', o)) for o in ['sx', 'sy', 'ox', 'oy']])
             try:
                 self.slides_list.load_from_file(config.get('Slides', 'last_slides_file'))
+                self.slides_list.set_size(self.presentation_window_position[0:2])
             except Exception as e:
                 print 'Could not load last slides file'
                 print e
@@ -190,7 +191,7 @@ class MainFrame(tk.Frame):
 
             if l[0] == 'FADEIN':
                 if not self.presentation_frame is None:
-                    self.presentation_frame.change_image(self.slides_list.get_by_id(l[1]).image)
+                    self.presentation_frame.change_image(self.slides_list.get_by_id(l[1]))
             elif l[0] == 'FADEOUT':
                 if not self.presentation_frame is None:
                     self.presentation_frame.fade_out()
@@ -255,7 +256,7 @@ class MainFrame(tk.Frame):
         if not self.presentation_frame is None:
             item = self.slides_list.get_selected()
             if not item is None:
-                self.presentation_frame.change_image(item.image)
+                self.presentation_frame.change_image(item)
 
     def fade_out_btn(self):
         if not self.presentation_frame is None:
@@ -295,6 +296,7 @@ class MainFrame(tk.Frame):
         d = ScreenSetupDialog(self, self.presentation_window_position)
         if not d.result is None:
             self.presentation_window_position = d.result
+            self.slides_list.set_size(self.presentation_window_position[0:2])
 
 
 class SlideList(object):
@@ -302,14 +304,17 @@ class SlideList(object):
         self._list = []
         self.listbox = None
         self.filepath = ""
+        self.size = None
 
     def append(self, items):
         if type(items) is list:
             for e in items:
                 e.load_image_if_necessary()
+                e.resize_image(self.size)
                 self._list.append(e)
         else:
             items.load_image_if_necessary()
+            items.resize_image(self.size)
             self._list.append(items)
         self.refresh_list()
 
@@ -324,6 +329,11 @@ class SlideList(object):
         else:
             self._list.remove(items)
         self.refresh_list()
+
+    def set_size(self, size):
+        self.size = size
+        for e in self._list:
+            e.resize_image(size)
 
     def update_selected(self, idf, desc, path):
         i = self.get_selected()
@@ -396,6 +406,7 @@ class SlideListItem(object):
         self.desc = desc
         self.path = path
         self.image = image
+        self.resized_image = None
 
     def load_image(self):
         self.image = PIL.Image.open(self.path)
@@ -403,6 +414,10 @@ class SlideListItem(object):
     def load_image_if_necessary(self):
         if self.image is None:
             self.load_image()
+
+    def resize_image(self, size):
+        if size is not None:
+            self.resized_image = self.image.resize(size, PIL.Image.ANTIALIAS)
 
     def __str__(self):
         return "%10s | %s" % (self.id, self.desc)
