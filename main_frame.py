@@ -34,9 +34,9 @@ class MainFrame(tk.Frame):
 
         self.actions_queue = Queue.Queue(1)
 
-        self.read_config()
-
         self.init_ui()
+
+        self.read_config()
 
     def init_ui(self):
 
@@ -151,8 +151,14 @@ class MainFrame(tk.Frame):
             config = ConfigParser.ConfigParser()
             config.read('config.ini')
             self.presentation_window_position = tuple([int(config.get('Presentation', o)) for o in ['sx', 'sy', 'ox', 'oy']])
-        except:
+            try:
+                self.slides_list.load_from_file(config.get('Slides', 'last_slides_file'))
+            except Exception as e:
+                print 'Could not load last slides file'
+                print e
+        except Exception as e:
             print 'Could not read config'
+            print e
 
     def write_config(self):
         config = ConfigParser.ConfigParser()
@@ -161,6 +167,8 @@ class MainFrame(tk.Frame):
         config.set('Presentation', 'sy', self.presentation_window_position[1])
         config.set('Presentation', 'ox', self.presentation_window_position[2])
         config.set('Presentation', 'oy', self.presentation_window_position[3])
+        config.add_section('Slides')
+        config.set('Slides', 'last_slides_file', self.slides_list.filepath)
         with open('config.ini', 'wb') as cfg_file:
             config.write(cfg_file)
 
